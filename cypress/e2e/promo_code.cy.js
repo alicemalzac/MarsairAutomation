@@ -1,0 +1,80 @@
+import HomePage from '../support/page-objects/HomePage.js'
+
+describe('MarsAir Promotional Code Tests', () => {
+
+    const successMsg = 'Seats available! Call 0800 MARSAIR to book!';
+    const invalidScheduleMsg = 'Unfortunately, this schedule is not possible. Please try again.';
+    const validPromoMsg_AF3 = 'Promotional code AF3-FJK-418 used: 30% discount!';
+    const validPromoMsg_JJ5 = 'Promotional code JJ5-OPQ-320 used: 50% discount!';
+    const noSeatsMsg = 'Sorry, there are no more seats available.';
+   let promoCode = {};
+    beforeEach(() => {
+        HomePage.visit();
+        HomePage.selectDepartingMonth('0'); // July
+        HomePage.selectReturningMonth('2'); // July (next year)
+        cy.fixture('promoCode').then((data) => {
+            promoCode = data;
+        });
+    });
+    it('TC018: Should apply a 30% discount with a valid promo code', () => {
+        HomePage.enterPromotionCode(promoCode.validCode30);
+        HomePage.clickSearch();
+        HomePage.verifyMessage(noSeatsMsg);
+        cy.get('#content').should(($content) => {
+            const text = $content.text();
+            expect(text.includes(successMsg) || text.includes(noSeatsMsg)).to.be.true;
+          });
+        cy.get('#content').should('contain.text', validPromoMsg_AF3); // bug found
+    });
+
+    it('TC019: Should apply a 50% discount with a valid promo code', () => {
+        HomePage.enterPromotionCode(promoCode.validCode50);
+        HomePage.clickSearch();
+        cy.get('#content').should(($content) => {
+            const text = $content.text();
+            expect(text.includes(successMsg) || text.includes(noSeatsMsg)).to.be.true;
+          });
+        cy.get('#content').should('contain.text', promoCode.validCode50); // bug foung
+    });
+
+    it('TC020: Should try to apply an invalid promo code', () => {
+        HomePage.enterPromotionCode(promoCode.invalidCodeWord);
+        HomePage.clickSearch();
+        cy.get('#content').should(($content) => {
+            const text = $content.text();
+            expect(text.includes(successMsg) || text.includes(noSeatsMsg)).to.be.true;
+          });
+        cy.get('#content').should('contain.text', invalidScheduleMsg); // bug found
+    });
+
+    it('TC021: Should try to apply an Invalid Format (No Hyphens) promo code', () => {
+        HomePage.enterPromotionCode(promoCode.invalidCode);
+        HomePage.clickSearch();
+        cy.get('#content').should(($content) => {
+            const text = $content.text();
+            expect(text.includes(successMsg) || text.includes(noSeatsMsg)).to.be.true;
+          });
+        cy.get('#content').should('contain.text', invalidScheduleMsg); //bug found
+    });
+
+    it('TC022: Should try to apply an Invalid Format (Check Digit Fail) promo code', () => {
+        HomePage.enterPromotionCode(promoCode.invalidCodeNumber);
+        HomePage.clickSearch();
+        cy.get('#content').should(($content) => {
+            const text = $content.text();
+            expect(text.includes(successMsg) || text.includes(noSeatsMsg)).to.be.true;
+          });
+        cy.get('#content').should('contain.text', invalidScheduleMsg); //bug found
+    });
+
+    it('TC023: Should try to apply an  Invalid Format (Additional Character) promo code', () => {
+        HomePage.enterPromotionCode(promoCode.invalidCodeDigit);
+        HomePage.clickSearch();
+        cy.get('#content').should(($content) => {
+            const text = $content.text();
+            expect(text.includes(successMsg) || text.includes(noSeatsMsg)).to.be.true;
+          });
+        cy.get('#content').should('contain.text',invalidScheduleMsg); //bug found
+    });
+});
+
